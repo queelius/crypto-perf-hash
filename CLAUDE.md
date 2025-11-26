@@ -15,64 +15,44 @@ The paper analyzes theoretical cryptographic perfect hash functions with three k
 
 - `paper.tex` - Main LaTeX source file
 - `references.bib` - BibTeX bibliography file
-- `img/` - Directory containing generated figures and plots (PDF, EPS, TEX formats)
-- `html/` - HTML export of the paper
-- `research/` - Mathematica notebooks (.nb) and related research materials
-- `archive/` - Previous versions of the paper
-- `paper.pdf` - Compiled output
+- `img/` - Figures and plots (PDF, EPS, TEX formats) included in the paper
+- `research/` - Mathematica notebooks (.nb) for derivations and plot generation
 
-## Working with LaTeX
+## Building the Paper
 
-### Building the Paper
-
-Compile the paper using:
 ```bash
-pdflatex paper.tex
-bibtex paper
-pdflatex paper.tex
-pdflatex paper.tex
-```
+# Full build with bibliography
+pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
 
-Or use latexmk for automatic dependency handling:
-```bash
+# Or use latexmk for automatic dependency handling
 latexmk -pdf paper.tex
+
+# Clean build artifacts
+latexmk -c paper.tex
 ```
 
-### Key LaTeX Packages Used
+## Custom LaTeX Macros
 
-- `algorithm2e` - For algorithm pseudocode (Algorithms 1-3)
-- `amsmath`, `amsthm`, `amssymb` - Mathematical notation and theorem environments
-- `natbib` - Bibliography management with `\cite{}`
-- `hyperref` - PDF hyperlinks and metadata
-
-### Custom Macros and Environments
-
-The paper defines several custom commands:
+Key macros defined in `paper.tex`:
 - `\Fun{name}` - Function notation
 - `\PH`, `\ph` - Perfect hash data type and constructor
-- `\Expect{X}` - Expectation operator
+- `\Expect{X}` - Expectation operator E[X]
 - `\BL` - Bit length function
 - `\cat` - Concatenation operator (#)
-- Theorem environments: `theorem`, `corollary`, `definition`, `postulate`, `conjecture`, `example`, `remark`
+- `\PS{X}` - Power set notation
+- `\geodist` - Geometric distribution
+- `\MinHash`, `\MaxHash` - Hash bound functions
 
-## Mathematical Content
+Algorithm keywords: `\Break`, `\True`, `\False`
 
-The paper presents:
-1. **Section 2**: Perfect hash function fundamentals
-2. **Section 3**: Cryptographic perfect hash functions using random oracles (Algorithm 1)
-3. **Section 4**: Two-level practical perfect hash functions (Algorithm 2)
-4. **Section 5**: Algebra of function composition
-5. **Appendix**: Probability mass of random bit length (Algorithm 3)
-
-Key theoretical results:
-- Expected space complexity: 1.44 bits/element for minimal perfect hash (load factor r=1)
-- General formula: log₂(e) - (1/r - 1)log₂(1/(1-r)) bits/element
+Theorem environments: `theorem`, `corollary`, `definition`, `postulate`, `conjecture`, `example`, `remark`
 
 ## Research Materials
 
-The `research/` directory contains Mathematica notebooks (.nb files) for:
-- Mathematical derivations and proofs
-- Plot generation (SVG, EPS formats)
-- Performance analysis
+Mathematica notebooks in `research/`:
+- `paper_pf.nb` - Main paper derivations
+- `perfhash.nb` - Perfect hash analysis
+- `cryptoph_with_fn.nb` - Cryptographic properties with function composition
+- `logq.nb`, `math1.nb` - Supporting mathematical computations
 
-Generated plots are exported to `img/` for inclusion in the paper.
+Plots are exported to `img/` as PDF/EPS/TEX for LaTeX inclusion.
