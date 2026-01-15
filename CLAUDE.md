@@ -4,50 +4,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains a LaTeX academic paper titled "Cryptographic perfect hash functions: A theoretical analysis on space efficiency and algebraic composition" by Alexander Towell.
+LaTeX academic paper: "Cryptographic perfect hash functions: A theoretical analysis on space efficiency and algebraic composition" by Alexander Towell.
 
-The paper analyzes theoretical cryptographic perfect hash functions with three key properties:
-1. They are cryptographic hash functions
-2. Their in-place encoding obtains the theoretical lower-bound for expected space complexity
-3. Their in-place encoding is a random bit string with maximum entropy
+Analyzes cryptographic perfect hash functions with: (1) cryptographic hash function properties, (2) theoretical lower-bound space complexity, (3) maximum entropy in-place encoding.
 
 ## Repository Structure
 
-- `paper.tex` - Main LaTeX source file
-- `references.bib` - BibTeX bibliography file
-- `img/` - Directory containing generated figures and plots (PDF, EPS, TEX formats)
-- `html/` - HTML export of the paper
-- `research/` - Mathematica notebooks (.nb) and related research materials
-- `archive/` - Previous versions of the paper
-- `paper.pdf` - Compiled output
-
-## Working with LaTeX
-
-### Building the Paper
-
-Compile the paper using:
-```bash
-pdflatex paper.tex
-bibtex paper
-pdflatex paper.tex
-pdflatex paper.tex
+```
+paper/              # Main paper sources
+  paper.tex         # LaTeX source
+  references.bib    # BibTeX bibliography
+  paper.pdf         # Compiled output
+  html/             # HTML export
+img/                # Generated figures (PDF, EPS, TEX)
+research/           # Mathematica notebooks (.nb) for derivations and plots
+archive/            # Previous versions
 ```
 
-Or use latexmk for automatic dependency handling:
+## Building the Paper
+
 ```bash
+cd paper
 latexmk -pdf paper.tex
 ```
 
-### Key LaTeX Packages Used
+Or manually:
+```bash
+cd paper
+pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
+```
 
-- `algorithm2e` - For algorithm pseudocode (Algorithms 1-3)
-- `amsmath`, `amsthm`, `amssymb` - Mathematical notation and theorem environments
-- `natbib` - Bibliography management with `\cite{}`
-- `hyperref` - PDF hyperlinks and metadata
+## Custom LaTeX Macros
 
-### Custom Macros and Environments
-
-The paper defines several custom commands:
+Key commands defined in `paper/paper.tex`:
 - `\Fun{name}` - Function notation
 - `\PH`, `\ph` - Perfect hash data type and constructor
 - `\Expect{X}` - Expectation operator
@@ -55,24 +44,17 @@ The paper defines several custom commands:
 - `\cat` - Concatenation operator (#)
 - Theorem environments: `theorem`, `corollary`, `definition`, `postulate`, `conjecture`, `example`, `remark`
 
-## Mathematical Content
+## Paper Structure
 
-The paper presents:
-1. **Section 2**: Perfect hash function fundamentals
-2. **Section 3**: Cryptographic perfect hash functions using random oracles (Algorithm 1)
-3. **Section 4**: Two-level practical perfect hash functions (Algorithm 2)
-4. **Section 5**: Algebra of function composition
-5. **Appendix**: Probability mass of random bit length (Algorithm 3)
+1. **Section 1**: Prior Art
+2. **Section 2**: Perfect hash function fundamentals
+3. **Section 3**: Cryptographic perfect hash functions using random oracles (Algorithm 1)
+4. **Section 4**: Two-level practical perfect hash functions (Algorithm 2)
+5. **Section 5**: Algebra of function composition
+6. **Appendix**: Probability mass of random bit length (Algorithm 3)
 
-Key theoretical results:
-- Expected space complexity: 1.44 bits/element for minimal perfect hash (load factor r=1)
-- General formula: log₂(e) - (1/r - 1)log₂(1/(1-r)) bits/element
+Key result: Expected space complexity is log₂(e) - (1/r - 1)log₂(1/(1-r)) bits/element, achieving 1.44 bits/element for minimal perfect hash (r=1).
 
 ## Research Materials
 
-The `research/` directory contains Mathematica notebooks (.nb files) for:
-- Mathematical derivations and proofs
-- Plot generation (SVG, EPS formats)
-- Performance analysis
-
-Generated plots are exported to `img/` for inclusion in the paper.
+The `research/` directory contains Mathematica notebooks for mathematical derivations and plot generation. Plots are exported to `img/` for paper inclusion.

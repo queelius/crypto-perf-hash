@@ -4,11 +4,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 %\usepackage{lmodern}
-\graphicspath{{img/}} 
+\graphicspath{{../img/}} 
 \usepackage[noend]{algorithm2e}
 \usepackage[margin=1in]{geometry}
 \usepackage{caption}
-\usepackage{bbm}
 \usepackage{mathtools}
 \usepackage{amsmath}
 \usepackage{amsthm}
@@ -135,11 +134,15 @@ We analyze a theoretical \emph{perfect hash function} that has three desirable p
 %####################################################################################################
 
 \section{Prior Art}
-Perfect hash functions have been extensively studied in the literature. Early foundational work by Dietzfelbinger et al.~\cite{phf} established theoretical bounds for space-efficient hash tables with worst-case constant access time. Czech, Havas, and Majewski~\cite{pmf} introduced a family of perfect hashing methods that became widely influential.
+Perfect hash functions have been extensively studied in the literature. The seminal work of Fredman, Koml\'{o}s, and Szemer\'{e}di~\cite{fks} established that static dictionaries can be stored in linear space with $O(1)$ worst-case lookup time, laying the theoretical foundation for perfect hashing. Dietzfelbinger et al.~\cite{phf} extended these results to dynamic settings, establishing theoretical bounds for space-efficient hash tables with worst-case constant access time. Czech, Havas, and Majewski~\cite{pmf} introduced practical families of perfect hashing methods that became widely influential.
 
-More recent practical algorithms have focused on minimal perfect hash functions (MPHFs), which achieve a load factor of exactly 1. Botelho, Pagh, and Ziviani~\cite{simple} presented simple and space-efficient constructions, while Belazzougui, Botelho, and Dietzfelbinger~\cite{chd} developed the Compress, Hash, and Displace (CHD) algorithm, which achieves excellent space-time tradeoffs for large datasets.
+More recent practical algorithms have focused on minimal perfect hash functions (MPHFs), which achieve a load factor of exactly 1. Botelho, Pagh, and Ziviani~\cite{simple} presented simple and space-efficient constructions, while Belazzougui, Botelho, and Dietzfelbinger~\cite{chd,mphfsurvey} developed the Compress, Hash, and Displace (CHD) algorithm, which achieves excellent space-time tradeoffs for large datasets. Related techniques such as cuckoo hashing~\cite{cuckoo} provide alternative approaches to collision resolution with strong theoretical guarantees.
 
-Our work differs by focusing on the theoretical properties of cryptographic perfect hash functions with maximum entropy encodings, rather than minimal space or construction speed.
+From an information-theoretic perspective, Shannon's foundational work~\cite{shannon} established the theoretical limits of data compression, which directly inform the space lower bounds for perfect hash functions. Cover and Thomas~\cite{coverandthomas} provide a comprehensive treatment of entropy and optimal coding, which underpin the analysis of encoding efficiency in this paper.
+
+The random oracle model, introduced by Bellare and Rogaway~\cite{randomoracle}, provides a theoretical framework for analyzing cryptographic hash functions as ideal random functions. This model is central to our analysis, as it allows us to derive precise probability distributions for the search process in Algorithm~\ref{alg:ph}.
+
+Our work differs from prior approaches by focusing on the theoretical properties of cryptographic perfect hash functions with maximum entropy encodings. While practical algorithms prioritize construction speed and space efficiency, we analyze the fundamental information-theoretic properties of perfect hash functions when the underlying hash function is modeled as a random oracle. This perspective reveals that the in-place encoding of such functions achieves the theoretical entropy bound, providing a rigorous foundation for understanding the space-optimality of perfect hash constructions.
 
 %####################################################################################################
 % perf hash fn
@@ -147,7 +150,7 @@ Our work differs by focusing on the theoretical properties of cryptographic perf
 
 \section{Perfect hash functions}
 A \emph{set} is an unordered collection of distinct elements.
-If we know the elements in a set, we may denote the set by these elements, e.g., $\{a,c,b\}$ denotes a set whose membes are exactly $a$, $b$, and $c$.
+If we know the elements in a set, we may denote the set by these elements, e.g., $\{a,c,b\}$ denotes a set whose members are exactly $a$, $b$, and $c$.
 
 A \emph{finite set} has a finite number of elements.
 For example, $\{ 1, 3, 5 \}$ is a finite set with three elements.
@@ -295,7 +298,7 @@ The cardinality of $\{0,1\}^n$ is $2^n$.
 In the case of $\{0,1\}$, we denote $\{0,1\}^0$ by $\epsilon$.
 The set of all bit strings of length $n$ or less is denoted by $\{0,1\}^{\leq n}$ with a cardinality $2^{n+1}-1$, e.g., $\{0,1\}^{\leq 2} = \epsilon \cup \{0,1\} \cup \{0,1\}^2$.
 The countably infinite set of all bit strings, $\lim_{n \to \infty} \{0,1\}^{\leq n}$, is denoted by $\{0,1\}^{*}$.
-A tuple $(x_1,x_2\ldots) \in \{0,1\}^{*}$ is denoted a \emph{bit string}, and we typically drop the angle brackets when specifying stings, e.g., $(x_1,x_2) \equiv x_1 x_2$.
+A tuple $(x_1,x_2\ldots) \in \{0,1\}^{*}$ is denoted a \emph{bit string}, and we typically drop the angle brackets when specifying strings, e.g., $(x_1,x_2) \equiv x_1 x_2$.
 
 An important operation that is closed over the free semigroup of $\{0,1\}$ is \emph{concatentation}, $\cat : \{0,1\}^* \times \{0,1\}^* \mapsto \{0,1\}^*$, which is defined as $a_1 \ldots a_n \cat b_1 \ldots b_m = a_1 \ldots a_n b_1 \ldots b_m$ with special cases $x \cat \epsilon = \epsilon \cat x = x$.
 
@@ -322,7 +325,7 @@ A convenient one-to-one correspondence between them is given by the following de
 We denote the mapping described by Definition~\ref{def:mapping} with the postfix function $' : \{0,1\}^* \mapsto \mathbbm{N}$ and $' : \mathbbm{N} \mapsto \{0,1\}^*$, which are inverse functions, i.e., $x'' = x$.
 An important observation of this mapping is that a natural number $n$ maps to a bit string $n'$ of length $\BL(n') = \lfloor \log_2 n \rfloor$.
 
-More generally, if we have some set $\mathbbm{U}$, in a physical computer there must be a way to map the elements of $\mathbbm{U}$ to bit strings that \emph{repesent} the values.
+More generally, if we have some set $\mathbbm{U}$, in a physical computer there must be a way to map the elements of $\mathbbm{U}$ to bit strings that \emph{represent} the values.
 We provide this mapping with \emph{encoder} and \emph{decoder} functions denoted respectively by $\Fun{e}[\mathbbm{U}] : \mathbbm{U} \mapsto \{0,1\}^*$ and $\Fun{d}[\mathbbm{U}] : \{0,1\}^* \mapsto \mathbbm{U}$ such that $\Fun{d}[\mathbbm{U}] \circ e_\mathbbm{U} = \mathrm{id}_\mathbbm{U}$ and $e_\mathbbm{U} \circ d_\mathbbm{U} = \mathrm{id}_{\{0,1\}^*}$.
 
 A special case of the encoder and decoder is given by letting any bit string represent either the sequence of bits $a_1 \ldots a_n$ or as the binary coded decimal (BCD), e.g., $010 \longleftrightarrow 4$.
@@ -366,9 +369,6 @@ n 			& = \min\{ j \in \mathbbm{N} | \mathbbm{Y}_j \in 2^{\mathbbm{N}} \land |\ma
 \end{equation}
 \end{definition}
 
-
-% this is not right, N_l = N_(2^b), since if j in N_l, its bit length j' is not b, i don't think... look into it
-
 %A family of important functions of the form $\mathbbm{A} \times \mathbbm{B} \mapsto \mathbbm{A}$ and $\mathbbm{A} \times %\mathbbm{B} \mapsto \mathbbm{B}$ are respectively defined as $\Fun{fst}(\Tuple{a,b}) = a$ and %$\Fun{snd}(\Tuple{a,b}) = b$.
 
 Since $\PH$ is a data type that purports to model perfect hash functions, its \emph{computational basis} is given by the following set of functions.
@@ -403,10 +403,14 @@ where
 
 \begin{theorem}
 	% dependent-type since codomain depends on r.
-A value of type $\mathrm{PH}$ constructed with $\mathrm{ph}_{\{0,1\}^*}(\mathbbm{A},r)$ \emph{models} $\mathrm{hash}_{\mathbbm{A}}^{r} : \{0,1\}^* \mapsto \{0,1,\ldots,k-1\}$ where $\mathbbm{A} \subseteq \{0,1\}^*$ and $k = \frac{|\mathbb{A}|}{r}$.
+A value of type $\mathrm{PH}$ constructed with $\mathrm{ph}_{\{0,1\}^*}(\mathbbm{A},r)$ \emph{models} $\mathrm{hash}_{\mathbbm{A}}^{r} : \{0,1\}^* \mapsto \{0,1,\ldots,k-1\}$ where $\mathbbm{A} \subseteq \{0,1\}^*$ and $k = \frac{|\mathbbm{A}|}{r}$.
 \end{theorem}
 \begin{proof}
-Proof here.
+Let $(n', N) = \mathrm{ph}(\mathbbm{A}, r)$ be the value constructed by the definition. By construction, $N = \lceil |\mathbbm{A}|/r \rceil$, so the codomain has size $N = \lceil |\mathbbm{A}|/r \rceil \geq |\mathbbm{A}|/r$, yielding a load factor of at most $r$.
+
+The value $n$ is chosen as the minimum natural number such that $|\mathbbm{Y}_n| = |\mathbbm{A}|$, where $\mathbbm{Y}_n = \{\beta(x,n) : x \in \mathbbm{A}\}$ and $\beta(x,n) = \mathrm{trunc}(\mathrm{hash}(x' \cat n'), k)' \mod N$. The condition $|\mathbbm{Y}_n| = |\mathbbm{A}|$ ensures that all elements of $\mathbbm{A}$ map to distinct hashes, i.e., $\beta(\cdot, n)|_{\mathbbm{A}}$ is injective.
+
+The lookup function $\mathrm{perfect\_hash}((n', N), x)$ computes $\mathrm{trunc}(\mathrm{hash}(x' \cat n'), k)' \mod N$, which equals $\beta(x, n)$ by definition. Since $\beta(\cdot, n)|_{\mathbbm{A}}$ is injective and maps into $\{0, \ldots, N-1\}$, the function $\mathrm{perfect\_hash}((n', N), \cdot)$ restricted to $\mathbbm{A}$ is a perfect hash function with codomain $\{0, \ldots, N-1\}$ and load factor $|\mathbbm{A}|/N \leq r$.
 \end{proof}
 
 Suppose we have a function $f : \mathbbm{U} \mapsto \{0,1\}^*$ such that $f|_{\mathbbm{A}}$ is \emph{injective}, e.g., an \emph{encoder} for values of $\mathbbm{A} \subseteq \mathbbm{U}$.
@@ -460,7 +464,7 @@ Therefore, the ratio of perfect hash functions restricted to $\mathbbm{A}$ to th
 	p = \frac{P^{N}_{m}}{N^m}.
 \end{equation}
 
-By the property of the hash function $\mathrm{hash}^*$ being a random oracle, the algorithm randomly samples one of the hash functions, which is a perfect hash function with probabilty $p$.
+By the property of the hash function $\mathrm{hash}^*$ being a random oracle, the algorithm randomly samples one of the hash functions, which is a perfect hash function with probability $p$.
 
 %$\mathrm{hash}_{\mathbbm{A}}^{r}$ to $\mathbbm{A}$, there are $N^m$ hash functions of this type. type $\{0,1\}^* \mapsto \mathbbm{N}$ over $\mathbbm{A}$ with a load factor $r$ restricted to $\mathbbm{A}$ with 
 	
@@ -495,20 +499,13 @@ The expected coding size is given approximately by
 \end{equation}
 \end{theorem}
 \begin{proof}
-\begin{equation}
-    \frac{n}{r}(1 - r) \log_2 \left(1 - r\right) - \log_2 n - (u - n) \log_2 (1 - n/u)
-\end{equation}
-\begin{equation}
-    \left(\frac{1}{r} - 1\right) \log_2 \left(1 - r\right) - \frac{1}{n}\log_2 n - \frac{u - n}{n} \log_2\left(1 - \frac{n}{u}\right)
-\end{equation}
-
 The space required for the perfect hash function found by Algorithm~\ref{alg:ph} is of the order of the length $n$ of the bit string $b_n$ in the returned tuple. Therefore, for space efficiency, the algorithm exhaustively searches for a bit string in the order of increasing size $n$.
 
 We are interested in the first case when no collision occurs, which is a geometric distribution with probability of success $p(m,r)$ as given by the discrete random variable
 \begin{equation}
     Q \sim \geodist\!\bigl(p\!\left(m,r\right)\bigr),
 \end{equation}
-where $p(m,r)$ is given by (\ref{eq:p_m_r}. The expected number of trials for the geometric distribution is given by
+where $p(m,r)$ is given by (\ref{eq:p_m_r}). The expected number of trials for the geometric distribution is given by
 \begin{equation}
     \Expect{Q} = \frac{1}{p(m,r)} = \frac{\left(\frac{m}{r}\right)^m \left(\frac{m}{r}-m\right)!}{\left(\frac{m}{r}\right)!}.
 \end{equation}
@@ -545,15 +542,29 @@ After further simplification, we arrive at
 \end{equation}
 \end{proof}
 
-The entropy of $Q$ is given by
+The encoding of the perfect hash function achieves maximum entropy for its expected length. Since $Q$ follows a geometric distribution with success probability $p = p(m,r)$, its entropy is given by
 \begin{equation}
-    \frac{-(1-p)}{p} \log_2(1 - p) - \log_2(p)
+    H(Q) = \frac{-(1-p)}{p} \log_2(1 - p) - \log_2(p),
 \end{equation}
-
+which can be rewritten as
 \begin{equation}
-    \left(\frac{1}{p}-1\right) \log_2\!\left(\frac{1}{1 - p}\right) + \log_2\frac{1}{p}
+    H(Q) = \left(\frac{1}{p}-1\right) \log_2\!\left(\frac{1}{1 - p}\right) + \log_2\frac{1}{p}.
 \end{equation}
+This entropy equals the expected bit length $\mathbb{E}[\log_2 Q]$ derived above, confirming that the geometric coding of trial indices is entropy-optimal. The \emph{in-place} encoding---using the trial index $n$ directly as the stored bit string---achieves this maximum entropy because each bit string of length $\ell$ occurs with probability proportional to $q^{2^\ell - 1}(1 - q^{2^\ell})$, which matches the probability mass function of the random bit length $N$ derived in the Appendix.
 
+\begin{theorem}[Maximum entropy encoding]
+\label{thm:maxentropy}
+The in-place encoding of the cryptographic perfect hash function achieves maximum entropy for its expected length. Specifically, for a perfect hash function over a set of cardinality $m$ with load factor $r$, the encoding $n'$ has entropy
+\begin{equation}
+H(N) = \mathbb{E}[\mathrm{BL}(n')] = \log_2 \mathrm{e} - \left(\frac{1}{r} - 1\right) \log_2\!\left(\frac{1}{1-r}\right) \text{ bits/element},
+\end{equation}
+which equals the information-theoretic lower bound for representing perfect hash functions over uniformly distributed random sets.
+\end{theorem}
+\begin{proof}
+By the random oracle assumption, each trial $n$ succeeds independently with probability $p = p(m,r)$. The first successful trial $Q$ follows a geometric distribution, and the encoding $n'$ uses $\mathrm{BL}(n') = \lfloor \log_2 n \rfloor$ bits.
+
+The entropy of a geometric random variable with success probability $p$ is $H(Q) = \frac{-(1-p)}{p}\log_2(1-p) - \log_2 p$. Since the bijection between $n$ and $n'$ preserves information, and the expected bit length equals the entropy, the encoding is optimal in the sense of Shannon's source coding theorem~\cite{shannon,coverandthomas}. No encoding can achieve a smaller expected length while faithfully representing the perfect hash function.
+\end{proof}
 
 Note that Algorithm~\ref{alg:ph} has an exponential time 
 complexity with respect to the cardinality of the input set $\mathbbm{S}$. As a 
@@ -585,10 +596,10 @@ which is the expected lower-bound given by Postulate~\ref{pst:lb}.
 \end{proof}
 This is as expected, since Algorithm~\ref{alg:ph} finds the \emph{smallest} perfect hash function that is a function of a random oracle for any load factor $0 < r \leq 1$ in which the distribution of the sets are uniformly distributed. The following corollary follows as a result.
 \begin{corollary}
-The lower-bound for perfect hash functions with a load factor $0 < r \leq 1$ is given by (\ref{eq:code_size}.
+The lower-bound for perfect hash functions with a load factor $0 < r \leq 1$ is given by (\ref{eq:code_size}).
 \end{corollary}
 As $r$ goes to $0$, the expected bits per element goes to $0$.
-t
+
 Note that the \emph{probability mass function} of the random bit string found for $b$ is known exactly. Thus, if the desire is to \emph{serialize} the perfect hash function for transmission or storage, shorter bit strings may be assigned to more probable bit strings. This representation is not usable \emph{in-place}, i.e., the serialization must be decoded, but it can reduce transmission or storage cost.
 
 \begin{algorithm}
@@ -728,7 +739,7 @@ Note that the \emph{probability mass function} of the random bit string found fo
 \end{algorithm}
 
 \subsection{Analysis}
-Suppose we have a set $\mathbbm{X}$ of $m$ elements with some total order $x_{(1)},\ldots,x_{(m)}$ for which we seek a perfect hash function $\mathrm{hash}_{\mathbbm{X}} : \mathbbm{U} \mapsto mathbbm{Z}$.
+Suppose we have a set $\mathbbm{X}$ of $m$ elements with some total order $x_{(1)},\ldots,x_{(m)}$ for which we seek a perfect hash function $\mathrm{hash}_{\mathbbm{X}} : \mathbbm{U} \mapsto \mathbbm{Z}$.
 
 We denote the \emph{serialization} of some value $x$ by $x'$.
 If $x$ is already understood to be a serialization, then $x'$ denotes deserialization instead.
@@ -747,13 +758,19 @@ E(T) = \sum_{j=1}^{m} E(T_j) = \sum_{j=1}^{m} \frac{1}{p_j} = m H_{m-1},
 \end{equation}
 which asymptotically converges to $E(T) = m \gamma + m \ln(m-1)$ or on average $\gamma + \ln (m-1)$ trials per element of $\mathbbm{X}$.
 
-If we use the minimum number of bits
+If we use the minimum number of bits to encode each trial index $n$ for each bucket, the expected space per bucket is $\log_2 \mathrm{e} \approx 1.44$ bits, matching the single-level lower bound. However, the two-level approach offers a practical advantage: by partitioning the set into $k$ smaller buckets, each bucket requires fewer trials on average, reducing construction time from exponential in $m$ to polynomial.
 
 The variance of $T$ is given by
 \begin{equation}
-V{T} = \sum_{j=2}^{m }V{T_j}.
+\mathrm{Var}(T) = \sum_{j=2}^{m} \mathrm{Var}(T_j).
 \end{equation}
+Since each $T_j$ follows a geometric distribution with success probability $p_j = \frac{m-j+1}{m}$, we have $\mathrm{Var}(T_j) = \frac{1-p_j}{p_j^2}$, and thus
+\begin{equation}
+\mathrm{Var}(T) = \sum_{j=2}^{m} \frac{j-1}{(m-j+1)^2} \cdot m^2.
+\end{equation}
+This variance is $O(m^2)$, indicating that while the expected number of trials grows as $m \ln m$, the actual number of trials can vary significantly for any particular set.
 
+The two-level construction in Algorithm~\ref{alg:2ph} trades space optimality for construction efficiency. By processing buckets in decreasing order of cardinality, larger buckets are assigned hashes first when more slots are available, reducing the expected number of collisions with previously assigned hashes.
 
 %############################################################################################################
 % composition
@@ -796,6 +813,23 @@ For a perfect hash function with codomain $\mathbbm{Y}$, the ratio of permutatio
 \end{equation}
 \end{corollary}
 
+\subsection{Applications of composition}
+
+The algebraic properties of perfect hash function composition have practical applications in several contexts.
+
+\begin{example}
+\textbf{Domain adaptation.} Suppose we have a perfect hash function $h_\mathbbm{A} : \{0,1\}^* \mapsto \{0,\ldots,N-1\}$ constructed by Algorithm~\ref{alg:ph}, but we require a hash function over a different domain $\mathbbm{U}$. Given any injective encoder $e : \mathbbm{U} \mapsto \{0,1\}^*$, the composition $h_\mathbbm{A} \circ e$ is a perfect hash function over $e^{-1}(\mathbbm{A}) \subseteq \mathbbm{U}$ with the same load factor.
+\end{example}
+
+\begin{example}
+\textbf{Load factor adjustment.} Given a minimal perfect hash function ($r = 1$), we can reduce the load factor to any $r' < 1$ by composing with an injection $g : \{0,\ldots,N-1\} \hookrightarrow \{0,\ldots,\lceil N/r' \rceil - 1\}$. This allows trading space for reduced collision probability outside of $\mathbbm{A}$.
+\end{example}
+
+\begin{example}
+\textbf{Randomization.} Given a deterministic perfect hash function, composing with a random permutation $\pi$ yields a randomized perfect hash function that preserves the perfect hash property while obscuring the original hash assignments. This is useful in cryptographic applications where predictability of hash values is undesirable.
+\end{example}
+
+These composition properties demonstrate that perfect hash functions form a rich algebraic structure, enabling flexible construction of hash function families from primitive building blocks.
 
 %############################################################################################################
 % appendix
@@ -874,7 +908,7 @@ By the product rule, the probability that every bit string smaller than length $
 \label{eq:prob_is_mass}
     q^{2^n-1}\left(1 - q^{2^n}\right).
 \end{equation}
-For (\ref{eq:prob_is_mass} to be a probability mass function, two conditions must be met. First, its range must be a subset of $[0,1]$. Second, the summation over its domain must be $1$.
+For (\ref{eq:prob_is_mass}) to be a probability mass function, two conditions must be met. First, its range must be a subset of $[0,1]$. Second, the summation over its domain must be $1$.
 
 The first case is trivially shown by the observation that $q$ is a positive number between $0$ and $1$ and therefore any non-negative power of $q$ is positive number between $0$ and $1$.
 
@@ -920,7 +954,7 @@ Explicitly evaluating this series for the first $4$ terms reveals a converging s
     &\qquad= q + q^3 + q^7 + q^{15} + \cdots.
 \end{align}
 \end{proof}
-When we numerically evaluate (\ref{eq:alt_expectN} for various $m$ and $r$, the results are in agreement with (\ref{eq:code_size}.
+When we numerically evaluate (\ref{eq:alt_expectN}) for various $m$ and $r$, the results are in agreement with (\ref{eq:code_size}).
 
 
 %\listoffigures
