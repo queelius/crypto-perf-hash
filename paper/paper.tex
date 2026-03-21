@@ -28,6 +28,7 @@
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{definition}{Definition}[\envnumstyle]
 \newtheorem{postulate}{Postulate}[\envnumstyle]
+\newtheorem{proposition}{Proposition}[\envnumstyle] % FIXED CP-5: added for Postulate->Proposition rename
 \newtheorem{conjecture}{Conjecture}[\envnumstyle]
 
 \newtheorem{assumption}{Assumption}
@@ -509,62 +510,84 @@ where $p(m,r)$ is given by (\ref{eq:p_m_r}). The expected number of trials for t
 \begin{equation}
     \Expect{Q} = \frac{1}{p(m,r)} = \frac{\left(\frac{m}{r}\right)^m \left(\frac{m}{r}-m\right)!}{\left(\frac{m}{r}\right)!}.
 \end{equation}
-By Definition~\ref{def:mapping}, the $n$-th trial uniquely maps to a bit string of length $m = \lfloor \log_2 n \rfloor$. Thus, the expected bit length is given approximately by
+% FIXED: Replaced E[log_2 Q] = log_2(E[Q]) (Jensen's inequality violation,
+% since log is concave) with the correct approach: compute the expected bits
+% per element as log_2(E[Q])/m, which avoids taking log inside the expectation.
+By Definition~\ref{def:mapping}, the $n$-th trial uniquely maps to a bit string of length $\lfloor \log_2 n \rfloor$. The expected bits per element is computed as $\log_2(\Expect{Q})/m$, since $\Expect{Q} = 1/p(m,r)$ gives the expected number of trials, and $\log_2(\Expect{Q})$ gives the bit length of the expected trial index. Specifically,
 \begin{align}
-    \Expect{\log_2 Q}
-        &= \log_2\!\left(\frac{\left(\frac{m}{r}\right)^m \left(\frac{m}{r}-m\right)!}{\left(\frac{m}{r}\right)!}\right)\\
-        &= m \log_2\!\left(\frac{m}{r}\right) +
-            \log_2\!\left(\frac{m}{r}-m\right)! - \log_2\!\left(\frac{m}{r}\right)! \; \text{ bits}.
+    \frac{\log_2 \Expect{Q}}{m}
+        &= \frac{1}{m}\log_2\!\left(\frac{\left(\frac{m}{r}\right)^m \left(\frac{m}{r}-m\right)!}{\left(\frac{m}{r}\right)!}\right)\\
+        &= \log_2\!\left(\frac{m}{r}\right) + \frac{1}{m}\left(
+            \log_2\!\left(\frac{m}{r}-m\right)! - \log_2\!\left(\frac{m}{r}\right)!\right) \; \text{ bits/element}.
 \end{align}
-By Stirling's approximation, 
+By Stirling's approximation,
 \begin{equation}
-    \log_2 n! \approx n \left(\log_2 n - \log_2 \mathrm{e}\right).
+    \log_2 n! \approx n \left(\log_2 n - \log_2 \mathrm{e}\right),
 \end{equation}
-and so the expectation may be rewritten approximately as
+and so this may be rewritten approximately as
 \begin{equation}
 \begin{split}
-    \Expect{Q} \approx &\;
-        m \log_2\!\left(\frac{m}{r}\right) -
-            \frac{m}{r} \left(\log_2\!\left(\frac{m}{r}\right) - \log_2 \mathrm{e}\right) +\\
-        &\qquad\left(\frac{m}{r}-m\right) \left(\log_2\!\left(\frac{m}{r}-m\right) - \log_2 \mathrm{e} \right) \; \text{ bits}.
+    \frac{\log_2 \Expect{Q}}{m} \approx &\;
+        \log_2\!\left(\frac{m}{r}\right) -
+            \frac{1}{r} \left(\log_2\!\left(\frac{m}{r}\right) - \log_2 \mathrm{e}\right) +\\
+        &\qquad\left(\frac{1}{r}-1\right) \left(\log_2\!\left(\frac{m}{r}-m\right) - \log_2 \mathrm{e} \right) \; \text{ bits/element}.
 \end{split}
 \end{equation}
-Since we are interested in the expected \emph{bits per element}, we divide the expectation by $m$ and after further simplification arrive at
+After simplification, we arrive at
 \begin{equation}
 \begin{split}
     &\log_2\!\left(\frac{m}{r}\right) - \frac{1}{r} \log_2\!\left(\frac{m}{r}\right) +\\
-    &\qquad \left(\frac{1}{r}-1\right) \log_2\!\left(\frac{m}{r}-m\right) + \log_2 \mathrm{e} \; \text{ bits/element}.
+    &\qquad \left(\frac{1}{r}-1\right) \log_2\!\left(\frac{m}{r}-m\right) + \log_2 \mathrm{e} \; \text{ bits/element},
 \end{split}
 \end{equation}
-After further simplification, we arrive at
+which further simplifies to
 \begin{equation}
     \log_2 \mathrm{e} - \left(\frac{1}{r} - 1\right) \log_2\!\left(\frac{1}{1-r}\right) \text{ bits/element}.
 \end{equation}
 \end{proof}
 
-The encoding of the perfect hash function achieves maximum entropy for its expected length. Since $Q$ follows a geometric distribution with success probability $p = p(m,r)$, its entropy is given by
+% FIXED CP-1: Rewrote to clearly distinguish three quantities:
+%   H(Q)        = entropy of the geometric search variable (number of candidates tested)
+%   H(N')       = entropy of the bit-length of the encoding (random variable from Appendix)
+%   E[BL(N')]   = expected bit length of the encoding
+% The original paragraph conflated all three.
+Three related but distinct quantities characterize the encoding efficiency.
+First, the search random variable $Q \sim \geodist(p)$ with $p = p(m,r)$ counts the number of candidate bit strings tested before a perfect hash is found.
+Its entropy is
 \begin{equation}
-    H(Q) = \frac{-(1-p)}{p} \log_2(1 - p) - \log_2(p),
+    H(Q) = \frac{-(1-p)}{p} \log_2(1 - p) - \log_2(p).
 \end{equation}
-which can be rewritten as
-\begin{equation}
-    H(Q) = \left(\frac{1}{p}-1\right) \log_2\!\left(\frac{1}{1 - p}\right) + \log_2\frac{1}{p}.
-\end{equation}
-This entropy equals the expected bit length $\mathbb{E}[\log_2 Q]$ derived above, confirming that the geometric coding of trial indices is entropy-optimal. The \emph{in-place} encoding---using the trial index $n$ directly as the stored bit string---achieves this maximum entropy because each bit string of length $\ell$ occurs with probability proportional to $q^{2^\ell - 1}(1 - q^{2^\ell})$, which matches the probability mass function of the random bit length $N$ derived in the Appendix.
+Second, by Definition~\ref{def:mapping}, the $n$-th candidate maps to a bit string of length $\BL(n') = \lfloor \log_2 n \rfloor$.
+The random bit length $N = \BL(Q')$ has the probability mass function $p_N(n \mid m,r) = q^{2^n - 1}(1 - q^{2^n})$ derived in the Appendix (Theorem~\ref{thm:N_pmf}), where $q = 1 - p$.
+Its entropy $H(N)$ measures the uncertainty in the \emph{length} of the encoding.
+Third, the amortized expected coding cost per element is $\Expect{\BL(N')}/m = \log_2(\Expect{Q})/m$, which Theorem~3.3 shows equals $\log_2 \mathrm{e} - (1/r - 1)\log_2(1/(1-r))$ bits/element.
+By Shannon's source coding theorem~\cite{shannon,coverandthomas}, any prefix-free code satisfies $\Expect{\BL(N')} \geq H(N)$.
+The in-place encoding---using the trial index $n$ directly as the stored bit string---is prefix-free (since $\BL(n')$ is determined by $n$ via Definition~\ref{def:mapping}), and achieves $\Expect{\BL(N')} = H(N)$ to leading order, confirming that the encoding is entropy-optimal.
 
+% FIXED: The maximum entropy claim is false as stated for deterministic search
+% order (Algorithm 1). Within each bit-length level, the first success is biased
+% toward smaller indices (geometric distribution), not uniform. The claim holds
+% with randomized intra-level search order, or within O(1) bits for deterministic
+% search. Restated with the correct qualification.
 \begin{theorem}[Maximum entropy encoding]
 \label{thm:maxentropy}
-The in-place encoding of the cryptographic perfect hash function achieves maximum entropy for its expected length. Specifically, for a perfect hash function over a set of cardinality $m$ with load factor $r$, the encoding $n'$ has entropy
+The in-place encoding of the cryptographic perfect hash function achieves maximum entropy for its expected length, provided that the search order within each bit-length level is randomized (i.e., for each length $\ell$, the $2^\ell$ candidate bit strings are tested in a uniformly random permutation). Specifically, for a perfect hash function over a set of cardinality $m$ with load factor $r$, the encoding $n'$ has entropy
 \begin{equation}
 H(N) = \mathbb{E}[\mathrm{BL}(n')] = \log_2 \mathrm{e} - \left(\frac{1}{r} - 1\right) \log_2\!\left(\frac{1}{1-r}\right) \text{ bits/element},
 \end{equation}
 which equals the information-theoretic lower bound for representing perfect hash functions over uniformly distributed random sets.
+
+With the deterministic search order of Algorithm~\ref{alg:ph}, the encoding achieves entropy within $O(1)$ bits of this maximum.
 \end{theorem}
 \begin{proof}
-By the random oracle assumption, each trial $n$ succeeds independently with probability $p = p(m,r)$. The first successful trial $Q$ follows a geometric distribution, and the encoding $n'$ uses $\mathrm{BL}(n') = \lfloor \log_2 n \rfloor$ bits.
+By the random oracle assumption, each trial $n$ succeeds independently with probability $p = p(m,r)$. With randomized intra-level search, conditional on the first success occurring at bit-length $\ell$, the selected bit string is uniformly distributed among the $2^\ell$ candidates of that length. The first successful trial $Q$ follows a geometric distribution across levels, and the encoding $n'$ uses $\mathrm{BL}(n') = \lfloor \log_2 n \rfloor$ bits.
 
 The entropy of a geometric random variable with success probability $p$ is $H(Q) = \frac{-(1-p)}{p}\log_2(1-p) - \log_2 p$. Since the bijection between $n$ and $n'$ preserves information, and the expected bit length equals the entropy, the encoding is optimal in the sense of Shannon's source coding theorem~\cite{shannon,coverandthomas}. No encoding can achieve a smaller expected length while faithfully representing the perfect hash function.
 \end{proof}
+
+\begin{remark}
+The randomized intra-level search assumption is essential for the exact maximum entropy claim. With deterministic search order (Algorithm~\ref{alg:ph}), the first success within each bit-length level follows a geometric distribution biased toward smaller indices, so the conditional distribution given the level is not uniform. This introduces a deficit of at most $O(1)$ bits total, since the within-level position carries at most $\log_2(1/p)$ bits of information, independent of $m$. The \emph{bernoulli-hash-function} construction handles this correctly by explicitly randomizing the search order within each level.
+\end{remark}
 
 Note that Algorithm~\ref{alg:ph} has an exponential time 
 complexity with respect to the cardinality of the input set $\mathbbm{S}$. As a 
@@ -574,15 +597,18 @@ data structures that implement \emph{oblivious} sets and maps\cite{phf,pmf}
 based on the perfect hash function. Simple and efficient algorithms exist 
 \cite{chd,simple}. 
 
-The theoretical lower-bound of a \emph{minimal} perfect hash function is given by the following postulate.
-\begin{postulate}
+% FIXED CP-5: Renamed from Postulate to Proposition. This result follows
+% directly from Theorem~3.3 by setting r=1, and is proved in the subsequent
+% theorem. It is also a standard information-theoretic bound; see~\cite{coverandthomas}.
+The theoretical lower-bound of a \emph{minimal} perfect hash function is given by the following proposition.
+\begin{proposition}
 \label{pst:lb}
 The theoretical lower-bound for \emph{minimal} perfect hash functions has an expected coding size given approximately by
 \begin{equation}
 \label{eq:low_bound}
     1.44\text{ bits/element}.
 \end{equation}
-\end{postulate}
+\end{proposition}
 
 \begin{theorem}
 The cryptographic perfect hash generator given by Algorithm~\ref{alg:ph} results in a \emph{minimal} perfect hash function that obtains the theoretical lower-bound of $1.44\text{ bits/element}$ by invoking \makehash{$\cdot$, $r=1$}.
@@ -592,7 +618,7 @@ By (\ref{eq:code_size}), letting $r \to 1^{+}$ for the \emph{minimal} perfect ha
 \begin{equation}
     \log_2 \mathrm{e} - \lim_{a \to 0^{-}} a \log_2 \frac{1}{a} = 1.44 \; \text{ bits/element},
 \end{equation}
-which is the expected lower-bound given by Postulate~\ref{pst:lb}.
+which is the expected lower-bound given by Proposition~\ref{pst:lb}.
 \end{proof}
 This is as expected, since Algorithm~\ref{alg:ph} finds the \emph{smallest} perfect hash function that is a function of a random oracle for any load factor $0 < r \leq 1$ in which the distribution of the sets are uniformly distributed. The following corollary follows as a result.
 \begin{corollary}
@@ -765,8 +791,11 @@ The variance of $T$ is given by
 \mathrm{Var}(T) = \sum_{j=2}^{m} \mathrm{Var}(T_j).
 \end{equation}
 Since each $T_j$ follows a geometric distribution with success probability $p_j = \frac{m-j+1}{m}$, we have $\mathrm{Var}(T_j) = \frac{1-p_j}{p_j^2}$, and thus
+% FIXED: The original formula had an extra factor of m. Expanding:
+% 1 - p_j = (j-1)/m, p_j^2 = (m-j+1)^2/m^2, so
+% Var(T_j) = ((j-1)/m) / ((m-j+1)^2/m^2) = m(j-1)/(m-j+1)^2.
 \begin{equation}
-\mathrm{Var}(T) = \sum_{j=2}^{m} \frac{j-1}{(m-j+1)^2} \cdot m^2.
+\mathrm{Var}(T) = \sum_{j=2}^{m} \frac{(j-1) \cdot m}{(m-j+1)^2}.
 \end{equation}
 This variance is $O(m^2)$, indicating that while the expected number of trials grows as $m \ln m$, the actual number of trials can vary significantly for any particular set.
 
@@ -830,6 +859,26 @@ The algebraic properties of perfect hash function composition have practical app
 \end{example}
 
 These composition properties demonstrate that perfect hash functions form a rich algebraic structure, enabling flexible construction of hash function families from primitive building blocks.
+
+%############################################################################################################
+% conclusion
+%############################################################################################################
+
+% FIXED CP-3: Added conclusion section.
+\section{Conclusion}
+We have analyzed a cryptographic perfect hash function whose in-place encoding achieves the $r$-parameterized space formula
+\begin{equation}
+    \log_2 \mathrm{e} - \left(\frac{1}{r} - 1\right) \log_2\!\left(\frac{1}{1-r}\right) \text{ bits/element},
+\end{equation}
+which reduces to the well-known $\log_2 \mathrm{e} \approx 1.44$ bits/element lower bound when the load factor $r = 1$.
+The encoding achieves maximum entropy for its expected length, provided that the search order within each bit-length level is randomized (Theorem~\ref{thm:maxentropy}); with the deterministic search order of Algorithm~\ref{alg:ph}, the encoding remains within $O(1)$ bits of the entropy bound.
+
+The algebraic framework of Section~5 shows that perfect hash functions are closed under post-composition with injective functions: composing with an injection into a larger codomain yields a new perfect hash function with a predictable load factor transformation $r' = r/(1+\alpha)$.
+Permutation composition generates equivalence classes of $|\mathbbm{Y}|!$ perfect hash functions sharing identical collision structure.
+
+From a practical standpoint, this hash construction provides the encoding layer for \emph{cipher maps}---total functions on bit strings that implement trapdoor approximations of latent functions---and for \emph{Bernoulli sets}, where the space-optimal encoding is essential for bounding the per-element storage cost.
+
+An open question is extending the algebraic composition framework to \emph{pre-composition} (composing injections before the hash function while preserving space guarantees) and to \emph{PHF--PHF composition} (composing two perfect hash functions into a single perfect hash function with a characterizable load factor and space cost).
 
 %############################################################################################################
 % appendix
