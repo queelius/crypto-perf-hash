@@ -764,40 +764,60 @@ Note that the \emph{probability mass function} of the random bit string found fo
 	}
 \end{algorithm}
 
+% FIXED: CP-4 — replaced coupon-collector analysis with bucket-level analysis (2026-03-22)
 \subsection{Analysis}
-Suppose we have a set $\mathbbm{X}$ of $m$ elements with some total order $x_{(1)},\ldots,x_{(m)}$ for which we seek a perfect hash function $\mathrm{hash}_{\mathbbm{X}} : \mathbbm{U} \mapsto \mathbbm{Z}$.
+Algorithm~\ref{alg:2ph} partitions $\mathbbm{X}$ into $k$ buckets $\mathbbm{X}[1],\ldots,\mathbbm{X}[k]$ and processes each bucket as a unit: for bucket $\ell$, the algorithm searches over trial indices $n = 1, 2, \ldots$ until all $s_\ell = |\mathbbm{X}[\ell]|$ elements hash to distinct slots that are also disjoint from the previously claimed set $\mathbbm{Y}$.
+The unit of work is the bucket, not the individual element, so the analysis proceeds at the bucket level.
 
-We denote the \emph{serialization} of some value $x$ by $x'$.
-If $x$ is already understood to be a serialization, then $x'$ denotes deserialization instead.
-
-By the assumption that the hash function $\mathrm{hash} : \mathbbm{U} \mapsto \{0,1\}^k$ is a random oracle restricted to the codomain $\{0,1\}^k$, the $n$-th attempt (trial) $\mathrm{hash}\!\left(x_{(j)}' \cat n'\right)$ to find a non-colliding hash for $x_{(j)}$ has a probability of success $p_j = \frac{m-j+1}{m}$ since we have already found hashes for the previous $j-1$ elements and therefore there are only $m-(j-1)$ hashes remaining.
-
-This is an example of the Coupon collector's problem.
-Let $T_j$ denote the uncertain number of trials needed to find a non-colliding hash for $x_{(j)}$.
-The total number of trials needed is an uncertain random variable given by
+\paragraph{Per-bucket success probability.}
+When bucket $\ell$ is processed, $|\mathbbm{Y}|$ slots have already been claimed by previous buckets. Under the random oracle assumption, a single trial $n$ succeeds if and only if the $s_\ell$ hash values $\mathrm{hash}(x' \cat n')$ for $x \in \mathbbm{X}[\ell]$ are (i) mutually distinct and (ii) disjoint from $\mathbbm{Y}$. The probability of this event is
 \begin{equation}
-T = \sum_{j=1}^{m} T_j.
+\label{eq:bucket_prob}
+p_\ell = \prod_{i=0}^{s_\ell - 1} \frac{N - |\mathbbm{Y}| - i}{N},
 \end{equation}
-By the linearity of the expectation operator,
+since the first element must avoid $|\mathbbm{Y}|$ claimed slots, the second must additionally avoid the first element's slot, and so on. When $s_\ell$ is small and $|\mathbbm{Y}| \ll N$, a first-order approximation gives
 \begin{equation}
-E(T) = \sum_{j=1}^{m} E(T_j) = \sum_{j=1}^{m} \frac{1}{p_j} = m H_{m-1},
+p_\ell \approx \left(1 - \frac{s_\ell(s_\ell - 1)}{2N}\right)\!\left(1 - \frac{s_\ell \, |\mathbbm{Y}|}{N}\right).
 \end{equation}
-which asymptotically converges to $E(T) = m \gamma + m \ln(m-1)$ or on average $\gamma + \ln (m-1)$ trials per element of $\mathbbm{X}$.
 
-If we use the minimum number of bits to encode each trial index $n$ for each bucket, the expected space per bucket is $\log_2 \mathrm{e} \approx 1.44$ bits, matching the single-level lower bound. However, the two-level approach offers a practical advantage: by partitioning the set into $k$ smaller buckets, each bucket requires fewer trials on average, reducing construction time from exponential in $m$ to polynomial.
+\paragraph{Per-bucket expected trials.}
+Since successive trials for a given bucket are independent under the random oracle assumption, the number of trials $T_\ell$ for bucket $\ell$ follows a geometric distribution:
+\begin{equation}
+T_\ell \sim \geodist(p_\ell), \qquad \Expect{T_\ell} = \frac{1}{p_\ell}.
+\end{equation}
 
-The variance of $T$ is given by
+\paragraph{Total expected trials.}
+The total number of trials across all $k$ buckets is $T = \sum_{\ell=1}^{k} T_\ell$. By the linearity of expectation,
 \begin{equation}
-\mathrm{Var}(T) = \sum_{j=2}^{m} \mathrm{Var}(T_j).
+\Expect{T} = \sum_{\ell=1}^{k} \frac{1}{p_\ell}.
 \end{equation}
-Since each $T_j$ follows a geometric distribution with success probability $p_j = \frac{m-j+1}{m}$, we have $\mathrm{Var}(T_j) = \frac{1-p_j}{p_j^2}$, and thus
-% FIXED: The original formula had an extra factor of m. Expanding:
-% 1 - p_j = (j-1)/m, p_j^2 = (m-j+1)^2/m^2, so
-% Var(T_j) = ((j-1)/m) / ((m-j+1)^2/m^2) = m(j-1)/(m-j+1)^2.
+Under the random oracle assumption with approximately equal bucket sizes $s = m/k$, the claimed set grows as $|\mathbbm{Y}| \approx (\ell - 1) s$ when bucket $\ell$ is processed, giving
 \begin{equation}
-\mathrm{Var}(T) = \sum_{j=2}^{m} \frac{(j-1) \cdot m}{(m-j+1)^2}.
+\Expect{T} \approx \sum_{\ell=1}^{k} \prod_{i=0}^{s-1} \frac{N}{N - (\ell-1)s - i}.
 \end{equation}
-This variance is $O(m^2)$, indicating that while the expected number of trials grows as $m \ln m$, the actual number of trials can vary significantly for any particular set.
+For small $s$ (which is the point of the two-level scheme), $p_\ell$ is close to $1$ for all $\ell$, and each bucket requires few trials on average.
+
+\paragraph{Space cost.}
+Each bucket stores a single trial index $n_\ell$, amortized over $s_\ell$ elements. Since $T_\ell \sim \geodist(p_\ell)$, the expected trial index determines the encoding cost. By the same argument as in Section~3 (Theorem~3.3), the expected bits per element contributed by bucket $\ell$ is
+\begin{equation}
+\frac{\log_2 \Expect{T_\ell}}{s_\ell} = \frac{\log_2(1/p_\ell)}{s_\ell}.
+\end{equation}
+For the minimal case $r = 1$ (so $N = m$) with equal bucket sizes $s = m/k$, expanding (\ref{eq:bucket_prob}) gives
+\begin{equation}
+\frac{1}{p_\ell} = \prod_{i=0}^{s-1} \frac{m}{m - (\ell-1)s - i}.
+\end{equation}
+The total expected space across all $k$ buckets is
+\begin{equation}
+\sum_{\ell=1}^{k} \frac{\log_2(1/p_\ell)}{s_\ell} \cdot s_\ell = \sum_{\ell=1}^{k} \log_2\!\left(\frac{1}{p_\ell}\right) \text{ bits},
+\end{equation}
+or, per element, $\frac{1}{m}\sum_{\ell=1}^{k} \log_2(1/p_\ell)$ bits/element. As $k \to m$ (bucket sizes $s \to 1$), each bucket contains a single element, $p_\ell = (N - |\mathbbm{Y}|)/N$, and this sum telescopes to $\log_2(N^m / N!) / m$. By Stirling's approximation, this converges to $\log_2 \mathrm{e} \approx 1.44$ bits/element, recovering the single-level lower bound of Proposition~\ref{pst:lb}.
+
+\paragraph{Variance.}
+Since the $T_\ell$ are independent (each bucket's trials are independent of other buckets' trials under the random oracle assumption), the total variance is
+\begin{equation}
+\mathrm{Var}(T) = \sum_{\ell=1}^{k} \mathrm{Var}(T_\ell) = \sum_{\ell=1}^{k} \frac{1 - p_\ell}{p_\ell^2}.
+\end{equation}
+For approximately equal bucket sizes with $p_\ell$ close to $1$, each term contributes $\mathrm{Var}(T_\ell) \approx (1 - p_\ell)/p_\ell^2 \approx 1 - p_\ell$, and the total variance is $O(k)$, substantially smaller than the $O(m^2)$ variance of element-by-element placement.
 
 The two-level construction in Algorithm~\ref{alg:2ph} trades space optimality for construction efficiency. By processing buckets in decreasing order of cardinality, larger buckets are assigned hashes first when more slots are available, reducing the expected number of collisions with previously assigned hashes.
 
